@@ -33,6 +33,7 @@ def getFilingList(year, quarter):
   ''' Checks cache for filing, if not then downloads it'''
   directory = 'bin/filings/{0}-{1}.html'.format(year, quarter)
   if not os.path.exists(directory):
+    print "Downloading: " + fname
     urllib.urlretrieve(urlMasterGen(year, quarter), directory)
   return open(directory, 'r')
 
@@ -44,6 +45,7 @@ def getFilingDate(year, quarter, date):
   if not os.path.exists(directory):
     os.makedirs(directory)
   if not os.path.exists(fname):
+    print "Downloading: " + fname
     urllib.urlretrieve(urlMasterGen(year, quarter, date), fname)
   return open(fname, 'r')
     
@@ -52,28 +54,29 @@ def getFilingDate(year, quarter, date):
 def pullRecords(year, quarter):
   ''' Download all data from specified year and quarter '''
   def progress():
+    ''' Prints progress of pass'''
     print '\n'*100
     print message
     ct = int(time.time()-t)
     print '{0} / {1} -- {5} / {6} --- {4}:{2}:{3}'.format(i,n, (ct / 60) % 60, (ct / 1) % 60, ct / 3600, masteri, mastern)
-    
-  # fields :: [Int, String, String, Int, String]
-  fields = ["CIK", "Form Type", "Date Filed"]
+   
   message  = "Processing " + str(year) + " QTR " + str(quarter)
-  print urlMasterGen(year, quarter)
+  # fields :: [Int, String, Int]
+  fields = ["CIK", "Form Type", "Date Filed"]
+
+  # Get list of filings per day in specific year and quarter
   r = getFilingList(year, quarter)
   soup = BeautifulSoup(r.read())
   urls = [link.get("href") for link in soup(href=re.compile("^master"))]
   mastern = len(urls)
   for (masteri, masterurl) in enumerate(urls):
+    # Get list of filings on each specific day
     r = getFilingDate(year, quarter,masterurl)
     data = r.readlines()[10:]  # Remove crap at the top of the file
     filings = [x.split('|') for x in  data]
     n = len(filings)
     for (i, filing) in enumerate([x for x in filings if len(x) == 5 and get_close_matches(x[1], sp500, 1, 0.8)  and x[2] in ["10-K", "10-Q"]]):
       progress()
-      print filing[1]
-      print get_close_matches(filing[1], sp500,5,  0.8) 
       directory = 'bin/raw/' + str(filing[0])
       if not os.path.exists(directory):
         os.makedirs(directory)
@@ -91,8 +94,6 @@ def pullRecords(year, quarter):
             fout.write(url+filing[-1])
         
 
-#ftp.sec.gov/edgar/data/100441/0000950135-94-000566.txt
-
 if __name__ == "__main__":
   years = range(1994, 2000)
   quarters = range(1,5)
@@ -100,12 +101,12 @@ if __name__ == "__main__":
   for year, quarter in [(y, q) for y in years for q in quarters]:
     if year == 1994 and quarter <= 2: continue 
     pullRecords(year, quarter)
-    #except IOError: #Hitting the rate limit
-    # for i in xrange(60):
-    #    print '\n'*100
-    #    print "FTP Error: Sleeping {0} / 60".format(i+1)
-    #    time.sleep(1)
-    #  pullRecords(year, quarter)
+    except IOError: #Hitting the rate limit
+     for i in xrange(60):
+        print '\n'*100
+        print "FTP Error: Sleeping {0} / 60".format(i+1)
+        time.sleep(1)
+      pullRecords(year, quarter)
 
 
 

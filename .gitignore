@@ -37,4 +37,5 @@ nosetests.xml
 
 # Config files
 config.py
+error.log
 ENV
