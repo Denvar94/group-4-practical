@@ -33,3 +33,28 @@ It was suggested that we did this in the browser, I think this is a good idea. T
 One suggestion was using D3 (http://d3js.org/), not something I have ever done.
 
 There are about a million different ways though (http://www.creativebloq.com/design-tools/data-visualization-712402)
+
+# File list and explanations
+
+"1994-2013 EOY SP500 Snapshots.xlsx" - list of constituents of the SP500 at year end
+for years 1994-2014
+
+##CIK subfolder
+"removeDuplicates.py" - removes duplicate names from a list. 
+So if the list was "a,a,b,c,d" it would output "a,b,c,d". 
+Some formatting is required to clean the output.
+
+"sp500_all94" - all constituents back to 94, needs duplicates removed
+
+"sp500_historical_to2000" - all constituents back to 2000
+
+"companies with cik.csv" - an initial (incomplete) list of companies with CIK's
+
+"company...idx" - index files from the SEC matching up company names with CIK's 
+
+"idxDownloader.py" - incomplete scraper to scrape more idx files off of the SEC server
+
+"cikScraper.sh" - given a specified input list of companies, matches up companies to CIK
+uses the index files to try and perform matching. is somewhat successful.
+
+"sp500_94_ciks.csv" - is the output of Company names with CIKs but it is only 60% complete.

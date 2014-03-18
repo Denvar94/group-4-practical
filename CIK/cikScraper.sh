@@ -1,57 +1,34 @@
 #!/bin/bash
-#1for each year get a list of companies that were in the SP500 THAT YEAR
-#2COMPILE A LIST, WITHOUT DUPLICATES
+# Basic algorithm idea
+# 1 - for each year get a list of companies that were in the SP500 THAT YEAR
+# 2 - COMPILE A LIST, WITHOUT DUPLICATES
 
-#3 RUN THROUGH THE LIST OF ALL COMPANIES FROM 94 -2009 
-#4 GRAB the CIK's for the relevant companies
+# 3 - RUN THROUGH THE LIST OF ALL COMPANIES FROM 94 -2009 
+# 4 - GRAB the CIK's for the relevant companies
 
-#3 run through all companies
-symbol="AES Corp"
+#-=-=--=-=--=-=--=-=--=-=--=-=--=-=--=-=--=-=--=-=-
+# run through all companies
 while read symbol; do
 
-#4 Grab CIK for symbol
-#echo $symbol
+#stage 4 Grab CIK for symbol:
+#make it upper case
 symb=$(echo $symbol|tr '[:lower:]' '[:upper:]')
-#echo $symb
 
+#grep for the company
 firstGrepResult=`grep "$symb" *|head -1`
+
+#grep should return the LINE from companies.idx (includes CIK number)
+#this line takes the CIK number from the grep output
 CIK=`echo $firstGrepResult|rev|cut -d " " -f3|rev`
 
+#output separated by a comma
 echo $symb,$CIK
-done < "sp500_historical_to2000.txt"
+done < "sp500_94_noDuplicates.txt"
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#LEFTOVER CODE FROM EARLIER ATTEMPTS, BUT I'VE LEFT IT IN AS SOME OF IT
+#MAY BE USEFUL LATER.
 
-#1for x <- (all the input file names)
-#2find  COMPANY CONFORMED NAME:			x central Index key
-#3    then from that file take the line with x and the line after 
-#4		CENTRAL INDEX KEY:			0000062765
-#5		and return the last word of those two lines
+# grep '^Subject:' read-messages | cut -c10-80
+# sed -n 16224,16482p filename > newfile
 
-
-#1
-# while read symbol ; do 
-# #  stock $symbol
-# 
-# # 2. 
-# echo $symbol
-# symbol="${symbol^^}"
-# 
-# 
-# echo "grep -A2 \"COMPANY CONFORMED NAME:\s*$symbol\" ../Group\ 4\ DATA/bin/raw/ -r -m 2"
-# a=$(grep -A2 "COMPANY CONFORMED NAME:\s*$symbol" ../Group\ 4\ DATA/bin/raw/ -r -m 2)
-# #a=$(grep -r -m 1 -A 2 $symbol ../Group\ 4\ DATA/)
-# 
-# echo $a 
-# 
-# #2/3 grep '^Subject:' read-messages 
-# #3 cut -c10-80
-# 
-# #3 sed -n 16224,16482p filename > newfile
-# 
-# done < 2sp500.txt
-# 
-# 
-# 
-# 		
-# 		
