@@ -3,16 +3,12 @@ import requests
 import urllib
 import re
 import config
-import pymongo
-import  os 
+import sqlite3
+import os 
 import simplejson
 import time
 from difflib import get_close_matches
 
-client = pymongo.MongoClient()
-db = client['group-practical']
-filingsDB = db['filings']
-companiesDB = db['companies']
 
 url = "ftp://anonymous:" + config.email + "@ftp.sec.gov/"
 sp500 = [x.strip().upper() for x in open('sp500.txt','r')]
@@ -82,31 +78,55 @@ def pullRecords(year, quarter):
         os.makedirs(directory)
       extension = os.path.splitext(filing[-1])[-1].strip()
       saveLocation = os.path.join(directory, filing[2] + '-' + str(filing[3]) + extension)
-      d =  {"CIK" :int(filing[0]), "Name" : filing[1]}
-      companiesDB.insert(d)
-      d = dict(zip(fields, sanitise(filing)))
-      filingsDB.insert(d)
+        
+      cursor.execute('''INSERT INTO companies (CIK, name) VALUES (?, ?)''', filing[:2])
+      cursor.execute('''INSERT INTO filings (CIK, type, date, location) VALUES (?,?,?,?)''', sanitise(filing))
+
       if not os.path.isfile(saveLocation): 
         try:
           urllib.urlretrieve(url + filing[-1], saveLocation)
         except IOError:
           with open('error.log', 'a') as fout:
-            fout.write(url+filing[-1])
-        
+            fout.write(url+filing[-1]) 
+      break 
+    break  
 
 if __name__ == "__main__":
-  years = range(1994, 2000)
+  db = sqlite3.connect('db/group-practical.dat')
+  cursor = db.cursor()
+  cursor.execute('''CREATE TABLE IF NOT EXISTS companies
+                     ( CIK integer
+                     , name text
+                     , PRIMARY KEY (CIK))''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS filings
+                      ( CIK integer 
+                      , type text
+                      , date integer
+                      , location text
+                      , PRIMARY KEY (CIK, date)
+                      , FOREIGN KEY(CIK) REFERENCES companies(CIK))''')
+
+
+                        
+                          
+  
+
+
+
+  years = range(1994, 2009)
   quarters = range(1,5)
   t = time.time()
   for year, quarter in [(y, q) for y in years for q in quarters]:
-    if year == 1994 and quarter <= 2: continue 
-    pullRecords(year, quarter)
+    if year == 1994 and quarter <= 2: continue  
+    try:
+      pullRecords(year, quarter)
     except IOError: #Hitting the rate limit
      for i in xrange(60):
         print '\n'*100
         print "FTP Error: Sleeping {0} / 60".format(i+1)
         time.sleep(1)
-      pullRecords(year, quarter)
+     pullRecords(year, quarter)
+
 
 
 
