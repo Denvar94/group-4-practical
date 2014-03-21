@@ -1,13 +1,12 @@
-# Project Goal
-
-To fill in
 
 # Getting Started
 
 This repositary only contains the source files. Everyone will need to download the data and generate the fake data for themselves. 
 
-> git clone zzzz
-> python setup.py
+To install all dependencies, you should download [pip](https://pypi.python.org/pypi/pip) and then use the command `pip install -r libraries.pip`.
+
+Virtualenv's are also very useful (short for virtual environment). Read about them here http://simononsoftware.com/virtualenv-tutorial/
+
 
 
 # Implementation
