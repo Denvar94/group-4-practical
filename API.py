@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 
 app.config.update(dict(
-    DATABASE = os.path.join(app.root_path, 'db/group-practical.dat'),
+    DATABASE = os.path.join(app.root_path, 'fake.db'),
     DEBUG = True
     )
 )
@@ -30,7 +30,7 @@ def teardown_request(exception):
 
 @app.route('/companies')
 def hello_world():
-    g.cursor.execute('''SELECT name FROM companies''')
+    g.cursor.execute('''SELECT * FROM FINANCE ORDER BY Period''')
     r = [dict((g.cursor.description[i][0], value) \
                for i, value in enumerate(row)) for row in g.cursor.fetchall()]
     return simplejson.dumps(r) 
