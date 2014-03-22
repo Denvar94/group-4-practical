@@ -78,8 +78,8 @@ def pullRecords(year, quarter):
         os.makedirs(directory)
       extension = os.path.splitext(filing[-1])[-1].strip()
       saveLocation = os.path.join(directory, filing[2] + '-' + str(filing[3]) + extension)
-      cursor.execute('''INSERT INTO companies (CIK, name) VALUES (?, ?)''', filing[:2])
-      cursor.execute('''INSERT INTO filings (CIK, type, date, location) VALUES (?,?,?,?)''', sanitise(filing))
+      cursor.execute('''INSERT OR IGNORE INTO companies (CIK, name) VALUES (?, ?)''', filing[:2])
+      cursor.execute('''INSERT OR IGNORE INTO filings (CIK, type, date, location) VALUES (?,?,?,?)''', sanitise(filing))
       db.commit()
       if not os.path.isfile(saveLocation): 
         try:
