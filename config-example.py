@@ -1,1 +1,1 @@
-email = "matthewtpickering@gmail.com"
+email = <your email here>
