@@ -7,6 +7,8 @@ To install all dependencies, you should download [pip](https://pypi.python.org/p
 
 Virtualenv's are also very useful (short for virtual environment). Read about them here http://simononsoftware.com/virtualenv-tutorial/
 
+You will also need to copy config-example.py to config.py and change the email address so that the scraper works correctly.
+
 
 
 # Implementation
