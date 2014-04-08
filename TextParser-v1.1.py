@@ -1,4 +1,4 @@
-# Detect pattern: field label, space, number...
+# Detect a text based table and try to extract the good stuff!
 
 import string
 
@@ -7,7 +7,7 @@ import string
 ################################################################################
 
 # Characters associated with a data value
-dataChars = string.digits + "()$£-%"
+dataChars = string.digits + "()$.,£-%"
 
 # Strings that might seperate columns
 colSepStrings = ("   ", "\t", "---", "|")
@@ -39,25 +39,31 @@ CashFlow = Field("Cash Flow", ())
 
 Unknown = Field("Not a Field",())
             
-fields = (Profit, Revenue, SharePrice, Assets, SharePerDiv,
+Fields = (Profit, Revenue, SharePrice, Assets, SharePerDiv,
           OpMargin, CashFlow, Unknown)
 
 #Get the text string to the left of pos, in the same line as pos
 def getFieldLabel(line, pos):
+    end = pos - 1
+    while(end > 0 and not line[end] in string.letters):
+        end -= 1
+
     sepStrings = colSepStrings
     for char in dataChars:
-        sepString += (char,)
+        sepStrings += (char,)
     text = ""
-    for i in range(pos - 1, -1, -1):
-        for string in sepStrings:
-            if string in text:
-                return text
+    for i in range(end, -1, -1):
+        for strng in sepStrings:
+            if strng in text:
+                return text[1:]
         text = line[i] + text
     return text
 
 # Tries to match a given text string with a field
 def getField(string):
-    for f in field:
+    if len(string) < 5:
+        return Unknown
+    for f in Fields:
         for altStr in f.alts:
             if string in altStr or altStr in string:
                 return f
@@ -74,6 +80,9 @@ class Period(object):
         self.quarter = quarter
         self.unknown = (year == 0)
 
+    def toString(self):
+        return str(self.year) + ", " + str(self.quarter)
+
 Q1 = ("Jan", "Mar", "Q1", "Quarter 1", "1st Quarter", "January", "March")
 Q2 = ("Apr", "Jun", "Q2", "Quarter 2", "2nd Quarter", "April", "June")
 Q3 = ("Jul", "Sep", "Q3", "Quarter 3", "3rd Quarter", "July", "September")
@@ -83,19 +92,19 @@ Quarters = (Q1, Q2, Q3, Q4)
 
 # Tries to match a given text string with a time period
 def findPeriod(string):
-    found = false
+    found = False
     for year in range(1994, 2010):
-        if year in string:
-            found = true
+        if str(year)in string:
+            found = True
             break
     if not found:
         year = 0
 
-    found = false
+    found = False
     for quarter in range(1, 5):
         for txt in Quarters[quarter-1]:
             if txt in string:
-                found = true
+                found = True
                 break
     if not found:
         quarter = 0
@@ -108,23 +117,32 @@ def findPeriod(string):
 ################################################################################
 
 # Returns the column that pos occurs in a given line of text
+# Returns -1 if lin[pos] does not exist
 def getIndent(line, pos):
-    indent = 0
-    for i in range(0, pos):
-        if line[i] == "\t":
-            indent += 8 - (indent % 8)
-        else:
-            indent += 1
+    if pos >= len(line):
+        return -1
+    else:
+        indent = 0
+        for i in range(0, pos):
+            if line[i] == "\t":
+                indent += 8 - (indent % 8)
+            else:
+                indent += 1
+        return indent
 
 # Convert all tab characters in text into the equivalent number of spaces
 def flattenTabs(text):
     newText = ""
+    col = 0
     for i in range(0, len(text)):
         if text[i] == "\t":
-            newText += " " * (8 - (i % 8))
+            spaces = 8 - (col % 8)
+            newText += " " * spaces
+            col += spaces
         else:
             newText += text[i]
-
+            col += 1
+    return newText
     
 ################################################################################
 # SCALES
@@ -149,7 +167,7 @@ def findScale(lines, line):     #'line' is a numerical value
     while(above >= 0 or below < len(lines)):
         for s in Scales:
             for alt in s.alts:
-                if alt in lines(above) or alt in lines(below):
+                if alt in lines[above] or alt in lines[below]:
                     return s
         above = max(0, above - 1)
         below = min(len(lines) - 1, below + 1)
@@ -162,28 +180,28 @@ def findScale(lines, line):     #'line' is a numerical value
 
 # Find the next occurence of a possible data value within a line of text
 def getNextDataValRange(line):
-    foundNum = false 
+    foundNum = False 
     for i in range(0, len(line)):
         if line[i] in string.digits:
-            foundNum = true
+            foundNum = True
             start = i
             end = i
             break
     if not foundNum:
         return -1, -1
     else:
-        foundEnd = false
+        foundEnd = False
         for i in range(end + 1, len(line)):
             if not line[i] in dataChars:
                 end = i - 1
-                foundEnd = true
+                foundEnd = True
                 break
         if not foundEnd:
             end = len(line) - 1
-        foundStart = false
+        foundStart = False
         for i in range(start - 1, -1, -1):
             if "  " in line[i: end+1] or not line[i] in (dataChars + " "):
-                foundStart = true
+                foundStart = True
                 start = i+1
                 break
         if not foundStart:
@@ -197,7 +215,7 @@ def getNextDataValRange(line):
 def extractNum(data):
     numString = ""
     for i in range(0, len(data)):
-        if data[i] in string.digits:
+        if data[i] in string.digits + ".,":
             numString += data[i]
     return float(numString)
 
@@ -208,80 +226,93 @@ def searchForHeader(line, indent):
     text = flattenTabs(line)
     for i in range(1, MAX_COL_TITLE_WIDTH // 2):
         left = max(0, indent - i)
-        right = min(indent + i, len(line) - 1)
+        right = min(indent + i, len(text) - 1)
         currStr = text[left: right+1]
-        finish = false
+        finish = False
         for string in colSepStrings:
             if string in currStr:
-                finish = true
+                finish = True
         if finish:
-            return curStr
+            return currStr
         else:
             per = findPeriod(currStr)
             if not per.unknown:
-                return curStr
+                return currStr
     return ""
             
-def main():
-    listingsFile = open("FilePaths.txt", "r")
-    files = listingsFile.readlines()
-    listingsFile.close
+#Main
+listingsFile = open("FilePaths.txt", "r")
+files = listingsFile.readlines()
+listingsFile.close
 
-    for path in files:
-        file = open(path, "r")
-        lines = file.readlines()
-        file.close()
+for path in files:
+    file = open(path, "r")
+    lines = file.readlines()
+    file.close()
 
-        for i in range(0, len(lines)):
-            line = lines[i]
-            pos = 0
-            while(pos < len(line)):
-                text = line[pos:]
-                start, end = getNextDataValRange(text)
-                if start == -1:
-                    break
-
-                dataLabel = getFieldLabel(line, pos)
-                dataField = getField(dataLabel)
-                if dataField == Unknown:
-                    pos = end + 1
-                    continue
-
-                timePrd = findPeriod(dataLabel)
-                if timePrd.unknown:
-                    for j in range(i, max(-1, i - MAX_TABLE_HEIGHT - 1), -1):
-                        colTitle = searchForHeader(j, (start + end) // 2)
-                        if not colTitle == "":
-                            timePrd = findPeriod(colTitle)
+    for i in range(0, len(lines)):
+        line = lines[i]
+        pos = 0
+        while(pos < len(line)):
+            text = line[pos:]
+            start, end = getNextDataValRange(text)
+            if start == -1:
+                break
+            start += pos
+            end += pos
+            
+            dataLabel = getFieldLabel(line, start)  
+            dataField = getField(dataLabel)
+            if dataField == Unknown:
+                pos = end + 1
+                continue
+            
+            timePrd = findPeriod(line)
+            if timePrd.unknown:
+                indent = getIndent(line, (start + end) // 2)
+                for j in range(i - 1, max(-1, i - MAX_TABLE_HEIGHT - 1), -1):
+                    currLine = lines[j]
+                    colTitle = searchForHeader(currLine, indent)
+                    if not colTitle == "":
+                        timePrd = findPeriod(colTitle)
+                        if not timePrd.unknown:
                             break
+            if timePrd.unknown:
+                pos = end + 1
+                continue
+            else:
+                val = extractNum(line[start : end+1])
+                val *= findScale(lines, i).amount
 
-                if timePrd.unknown:
-                    pos = end + 1
-                    continue
-                else:
-                    val = extractNum(line[start : end+1])
-                    val *= findScale(i, lines).amount
-
-                    #Do Proper Output Here
-                    print(dataField.label + " = " + val)
-                    ###
-                    break
-
+                #Do Proper Output Here
+                print(dataField.label + " = " + str(val))
+                ###
+                break
 
 
+# To sort out:
+#   Filter out non desired periods
+#   Negatives in ()
+#   col headers with multiples lines
 
 ################################################################################
 # OLD CODE
 ################################################################################
 
+#print(dataLabel + "|" + line[start: end+1] + "|" + (timePrd.toString()))
+
 # Assume text[pos,...pos+k) is a number for some k
 # Return p <= pos s.t. text[p,..pos+k) is a data value
-# (a data value is a number with possible ()$%£- characters
+# (a data value is a number with possible ()$%Â£- characters
 def getNumberRange(text, pos):
     for i in range(pos, -1, -1):
         if not text[i] in dataChars:
             break
     return (i+1)
+
+
+
+
 
 
 
