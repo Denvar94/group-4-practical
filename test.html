@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<title>Well this is a thing</title>
+<head>
+	<script src="jquery.js"></script> <! replace as necessary, may want a classpath or something >
+	<script src="jquery.flot.js"></script>
+	<script src="jquery.flot.time.js"></script>
+	<script>
+		$(function(){
+			
+			var d2 = new Date(1970, 1, 0, 0, 0, 0, 0); 
+			var d1 = new Date("January 1, 1970, 00:00:00"); 
+			var d3 = new Date(1970, 3, 0, 0, 0, 0, 0); 
+			var d4 = new Date(1970, 4, 1, 0, 0, 0, 0); 
+			var d5 = new Date(1970, 5, 1, 0, 0, 0, 0); 
+			var d6 = new Date(1970, 6, 1, 0, 0, 0, 0); 
+			var d7 = new Date(1970, 7, 1, 0, 0, 0, 0); 
+			var d8 = new Date(1970, 8, 1, 0, 0, 0, 0); 
+			var d9 = new Date(1970, 9, 1, 0, 0, 0, 0); 
+			var d10 = new Date(1970, 12, 0, 0, 0, 0, 0); 
+			var d11 = new Date(1970, 11, 1, 0, 0, 0, 0); 
+			var d12 = new Date(1970, 12, 1, 0, 0, 0, 0); 
+			
+			// Show a chart with a missing section. Requires a null value in the data, so a function thatdetects when data is missing is needed first.
+			var series1 = {
+				color: "rgb(255, 0, 0)",
+				data: [ [d1,0], [d2, 0.5], [d3,2], [d4, 3], null, [d5, 4], [d6,5], [d7,4], [d8,3.5], [d9, 2], [d10,1] ],
+				label: "Missing data example",
+				clickable: false,
+				hoverable: false,
+			}
+			
+			// Compute points for series 2
+			var data2 = [];
+			for(var i = 0; i<5; i+=0.25){
+				data2.push([i*2678400000*8, (i*i/4)])
+			}
+			
+			// Show a chart which has minor script events when hovered over or clicked on.
+			var series2 ={
+				color: "rgb(0, 255, 0)",
+				data: data2,
+				label: "Interactivity example",
+				clickable: true,
+				hoverable: true,
+				highlightColor: "rgb(0, 255, 0)"
+			}
+			
+			// Compute points for series 3
+			var data3=[];
+			for(var i =0; i<=5; i+=0.25){
+				data3.push([i*2678400000*8, Math.sin(i)+0.5, Math.sin(i)-0.5]) 
+			}
+			
+			// A more interesting looking graph
+			var series3={
+				color: "rgb(0, 0, 255)",
+				data: data3,
+				label: "Cool thing",
+				lines: { show: false },
+				points: { show: false },
+				bars: { barWidth: 2678400000, align: "center", show: true },
+				xaxis: 1,
+				yaxis: 2,
+				clickable: false,
+				hoverable: false,
+				shadowSize: 0
+			}
+			
+			var data4=[];
+			for(var i =0; i<=5; i+=0.5){
+				data4.push([i*2678400000*8, Math.sin(i)]) 
+			}
+			
+			// A graph which isn't recorded on the legend, made to look as part of a different graph.
+			var series4={
+				color: "rgb(0, 0, 200)",
+				data: data4,
+				lines: { show: false },
+				points: { show: true },
+				xaxis: 1,
+				yaxis: 2,
+				clickable: false,
+				hoverable: false,
+				shadowSize: 0
+			}
+			
+			// the collection of series to plot
+			var series = [series1, series3, series4, series2]
+			
+			// sets options if not already set individually
+			var options = {
+				series: {
+					lines: { show: true },
+					points: { show: true }
+				},
+				grid: {
+					hoverable: true,
+					clickable: true
+				},
+				xaxis: {
+        mode: "time", // axis is in time mode
+        timeformat: "%YQ%q", //axis displays time in quarters
+		minTickSize: [3, "month"]
+      }
+			};
+			
+			// create an object that later scripts can manipulate, creating the graph as a side effect
+			var plot = $.plot("#placeholder", series, options);
+			
+			// Tooltip for click events (borrowed from flot examples)
+			$("<div id='tooltip'></div>").css({
+				position: "absolute",
+				display: "none",
+				border: "1px solid #fdd",
+				padding: "2px",
+				"background-color": "#fee",
+				opacity: 0.80
+			}).appendTo("body");
+			
+			// no event for hovering, is built in when you enable hoverable
+			
+			// event for clicking; displays a tooltip and highlights until next click
+			$("#placeholder").bind("plotclick", function (event, pos, item) {
+				if (item) {
+					var x = item.datapoint[0],
+						y = item.datapoint[1];
+					plot.unhighlight();
+					$("#tooltip").html(item.series.label + " (" + x + "," + y + ")")
+						.css({top: item.pageY+5, left: item.pageX+5})
+						.fadeIn(200);
+					plot.highlight(item.series, item.datapoint);
+				}
+			});
+		});
+	</script>
+</head>
+<body>
+	<div id="header">
+		<h2>Continued thingery</h2>
+	</div>
+	
+	<div id="content">
+		<div id="placeholder" style="width:1000px;height:500px" ></div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<! DOCTYPE html >
+<html>
+<title>Data Visualiser</title>
+<head>
+  <script src="jquery.js"></script>
+  <script src="jquery.flot.js"></script>
+  <script src="jquery.flot.time.js"></script>
+  <script src = "plotter.js"></script>
+  <style type="text/css">
+    body {background-color:white;}
+  </style>
+</head>
+
+<body>
+  <div id="header">
+    Title goes here
+  </div>
+  
+  <div id="content">
+    <div id="placeholder" style="width:1200px; height:500px; background-color:white"></div>
+	Content goes here<br>
+	Notes: <br>
+	Currently, it's assumed fields marked Cash represent costs, so are plotted as negatives. This might not be the case.
+	The legend needs fixing.<br>
+	Current fake data is not ideal for testing.<br><br>
+  </div>
+  
+  <div id="footer">
+    Footer goes here
+  </div>
+</body>
+</html>
