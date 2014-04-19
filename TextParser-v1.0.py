@@ -7,7 +7,7 @@ import string
 ################################################################################
 
 # Characters associated with a data value
-dataChars = string.digits + "()$£-%"
+dataChars = string.digits + "()$-%"
 
 # Strings that might seperate columns
 colSepStrings = ("   ", "\t", "---", "|")
@@ -18,6 +18,7 @@ MAX_COL_TITLE_WIDTH = 20
 # The maximum expected number of rows a table is expected to have
 MAX_TABLE_HEIGHT = 100
 
+"Condensed Consolidated" 
 
 ################################################################################
 # FIELDS
@@ -118,13 +119,7 @@ def getIndent(line, pos):
 
 # Convert all tab characters in text into the equivalent number of spaces
 def flattenTabs(text):
-    newText = ""
-    for i in range(0, len(text)):
-        if text[i] == "\t":
-            newText += " " * (8 - (i % 8))
-        else:
-            newText += text[i]
-
+    text = text.replace('\t', ' '*8)
     
 ################################################################################
 # SCALES
@@ -225,7 +220,7 @@ def searchForHeader(line, indent):
 def main():
     listingsFile = open("FilePaths.txt", "r")
     files = listingsFile.readlines()
-    listingsFile.close
+    listingsFile.close()
 
     for path in files:
         file = open(path, "r")
@@ -276,7 +271,7 @@ def main():
 
 # Assume text[pos,...pos+k) is a number for some k
 # Return p <= pos s.t. text[p,..pos+k) is a data value
-# (a data value is a number with possible ()$%£- characters
+# (a data value is a number with possible ()$%- characters
 def getNumberRange(text, pos):
     for i in range(pos, -1, -1):
         if not text[i] in dataChars:
