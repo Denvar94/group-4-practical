@@ -1,7 +1,10 @@
+# Version = 1.1
+
 # Detect a text based table and try to extract the good stuff!
 
 import string
 import os
+
 
 ################################################################################
 # CONSTANTS

@@ -1,0 +1,97 @@
+<! DOCTYPE html >
+<html>
+<title>Data Visualiser</title>
+<head>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/flot/0.8.2/jquery.flot.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/flot/0.8.2/jquery.flot.time.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/async/0.7.0/async.js"></script>
+  <script src = "plotter.js"></script>
+  <style type="text/css">
+    body {background-color:white;}
+  </style>
+  <script >
+  function updateListings(){
+      txt = $("#companies option:selected").text()
+      $.getJSON("/company/"+txt, function(listings){
+        var dropdown = $("#filings")
+        dropdown.empty()
+        $.each(listings, function (item){
+          dropdown.append($("<option />").val(listings[item]).text(listings[item]))
+        })
+      })
+  }
+  
+  function parseListing(){
+    cik = $("#companies option:selected").text()
+    path = $("#filings option:selected").text()
+    $.getJSON("/company/"+cik+"/"+path, function(graphData){
+      // Add here code to display returned information on the graph
+      console.log("Parsed: " + cik + " " + path)
+    })
+  }
+  
+  function all(){
+    $('#filings option:selected').removeAttr('selected')
+    $('#filings :first').attr('selected', 'selected')
+    parseListing();
+    
+    fs = $("#filings").children()
+    console.log(fs.length);
+    //This doens't work but should be like sequence in haskell
+    //You are meant to be able to do this with the async library 
+    //async.timeSeries(fs.length, function(){$("#right").trigger("click")})
+    $.each(fs, function(i,o){
+      setTimeout(function(){$("#right").trigger('click')}, i*2000)
+    })
+  }
+    
+  $(document).ready(function(){
+    $("#companies").change(updateListings)
+    $("#right").click(function(){$('#filings option:selected').removeAttr('selected').next('option').attr('selected', 'selected').trigger("change");})
+    $("#left").click(function(){$('#filings option:selected').removeAttr('selected').prev('option').attr('selected', 'selected').trigger("change");})
+    $("#all").click(all)
+    $("#filings").change(parseListing)
+    console.log("ready")
+    $.getJSON("company", function(ciks){
+      var dropdown = $("#companies")
+      $.each(ciks, function(item) {
+        dropdown.append($("<option />").val(ciks[item]).text(ciks[item]));
+        })
+      updateListings()
+      })
+    });
+  </script>
+</head>
+
+<body>
+  <div id="header">
+    Title goes here
+  </div>
+  
+  <div id="content">
+    <div id="placeholder" style="width:1200px; height:500px; background-color:white"></div>
+
+  <select id = "companies">
+  </select>
+
+  <select id = "filings">
+  </select>
+
+  <a id="left"><</a>
+  <a id="right">></a>
+  <a id="all">all</a>
+
+  <br>
+	Content goes here<br>
+	Notes: <br>
+	Currently, it's assumed fields marked Cash represent costs, so are plotted as negatives. This might not be the case.
+	The legend needs fixing.<br>
+	Current fake data is not ideal for testing.<br><br>
+  </div>
+  
+  <div id="footer">
+    Footer goes here
+  </div>
+</body>
+</html>
